@@ -1,0 +1,12 @@
+Runescape-like RPG
+Procedurally generated openworld
+Most of the contect in the game is reachable and not locked behind progression
+Player can start in different kind environments
+
+Getting assets (sound, animation, texture)
+Content creation (map, levels)
+
+In order to parallelise the transforms, need: dependecies between them
+    - each thread runs transforms on connected graphs only
+    - since false sharing happen only on write and not read, reading from a table doesn't build a dependecy for that table
+        for a specific transform

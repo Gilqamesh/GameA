@@ -1,0 +1,24 @@
+Data Name                                           Data Type
+_____________________________________________________________
+WorldPosition                                       2 r32
+MeshId                                              1 u32
+TextureId                                           1 u32
+AnimationId                                         1 u32 ?
+AnimationFrame                                      1 u32
+CurrentHealth                                       1 i32
+MaxHealth                                           1 i32
+CollisionDims                                       2 r32 (assuming its AABB)
+CurrentMana                                         1 i32
+MaxMana                                             1 i32
+CurrentEnergy                                       1 i32
+MaxEnergy                                           1 i32
+BehaviorState                                       1 u32 ?
+StrengthAttribute                                   1 i32
+WisdomAttribute                                     1 i32
+DamageAttribute                                     1 i32
+WoodcuttingSkill                                    1 u32
+PiercingChance                                      1 r32
+ItemId                                              1 u32
+Inventory                                           x u32
+Color                                               4 u8
+ArcherySkill                                        1 u32

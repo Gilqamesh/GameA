@@ -1,0 +1,39 @@
+Player {
+    WorldPosition       = { 10.0f, 20.2f },
+    MeshId              = 1,
+    TextureId           = 1,
+    CurrentHealth       = 100,
+    MaxHealth           = 100,
+    CurrentMana         = 60,
+    MaxMana             = 60,
+    StrengthAttribute   = 12,
+    WisdomAttribute     = 15,
+    Inventory           = { 12, 421, 253 }
+}
+
+MonsterA {
+    WorldPosition       = { 32.0f, -23.5f },
+    MeshId              = 2,
+    TextureId           = 2,
+    AnimationId         = 1,
+    AnimationFrame      = 5,
+    CurrentHealth       = 10,
+    MaxHeath            = 10,
+    BehaviorState       = 0,
+    StrengthAttribute   = 10,
+    Inventory           = { 2 }
+}
+
+SwordPointy {
+    MeshId              = 3,
+    TextureId           = 3,
+    PiercingChance      = 42.5f,
+    ItemId              = 2
+}
+
+Cactus {
+    WorldPosition       = { 40.0f, 32.0f },
+    TextureId           = 4,
+    DamageAttribute     = 10,
+    CollisionDims       = { 2.0f, 3.0f }
+}
