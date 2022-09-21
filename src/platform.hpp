@@ -34,44 +34,10 @@
 # define LOG(x) (cout << x << endl)
 # define LINE() (LOG(__FILE__ << " " << __LINE__))
 
-#if defined(G_DEBUG)
-struct debug_cycle_counter
-{
-    u64 CycleCount;
-    u32 HitCount;
-};
-
-enum
-{
-    DebugCycleCounter_Reserved0,
-    DebugCycleCounter_Reserved1,
-    DebugCycleCounter_Reserved2,
-    DebugCycleCounter_Reserved3,
-    DebugCycleCounter_Reserved4,
-    DebugCycleCounter_Reserved5,
-    DebugCycleCounter_Reserved6,
-    DebugCycleCounter_Reserved7,
-    DebugCycleCounter_Reserved8,
-    DebugCycleCounter_Reserved9,
-    DebugCycleCounter_Count
-};
-
-# define BEGIN_TIMED_BLOCK(ID) u64 StartCycleCount##ID = __rdtsc();
-# define END_TIMED_BLOCK(ID) {\
-    DebugGlobalMemory->Counters[DebugCycleCounter_##ID].CycleCount += __rdtsc() - StartCycleCount##ID;\
-    ++DebugGlobalMemory->Counters[DebugCycleCounter_##ID].HitCount;\
-}
-extern struct game_memory *DebugGlobalMemory;
-#else
-# define BEGIN_TIMED_BLOCK(ID)
-# define END_TIMED_BLOCK(ID)
-#endif
-
 struct game_window
 {
-    u16 Width;
-    u16 Height;
-    b32 Shown;
+    u32 Width;
+    u32 Height;
 };
 
 # include "raylib_wrapper.hpp"
@@ -89,10 +55,6 @@ struct game_memory
     u64 PermanentStorageSize;
     void *TransientStorage;
     u64 TransientStorageSize;
-
-#if defined(G_DEBUG)
-    debug_cycle_counter Counters[DebugCycleCounter_Count];
-#endif
 };
 
 #endif

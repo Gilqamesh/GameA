@@ -54,6 +54,11 @@ GetRand(i64 low, i64 high)
 }
 
 typedef Vector2 v2_r32;
+struct v2_u32
+{
+    u32 x;
+    u32 y;
+};
 
 inline v2_r32
 operator+(v2_r32 v, v2_r32 w)
