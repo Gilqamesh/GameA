@@ -72,7 +72,6 @@ Transform_SortMeshesByFlags(game_state *GameState)
 internal void
 Transform_DispatchMeshByTags(game_state *GameState, raylib_wrapper_code *RL)
 {
-    v2_r32 MouseDelta = RL->GetMouseDelta();
     b32 IsMouseDown = RL->IsMouseButtonDown(MOUSE_BUTTON_LEFT);
     b32 IsMouseClicked = RL->IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     u32 MeshesSize = GameState->Tables.Meshes.CurrentSize;
@@ -103,10 +102,10 @@ Transform_DispatchMeshByTags(game_state *GameState, raylib_wrapper_code *RL)
                     VertexIndex < Mesh->NumberOfVertices;
                     ++VertexIndex)
                 {
-                    Mesh->VertexPositions[VertexIndex] += MouseDelta;
+                    Mesh->VertexPositions[VertexIndex] += GameState->MouseDelta;
                 }
             }
-            if ((MeshFlags & Mesh_Event_AddMesh))
+            if (IsMouseClicked && (MeshFlags & Mesh_Event_AddMesh))
             {
                 for (u32 Iterations = 0;
                      Iterations < GameState->Tables.Events_AddMesh.AllocatedSize / GameState->TargetFPS;
@@ -117,17 +116,20 @@ Transform_DispatchMeshByTags(game_state *GameState, raylib_wrapper_code *RL)
                     mesh GeneratedMesh = {
                         {},
                         NumberOfVertices,
-                        Mesh_RemovableByClick,
+                        Mesh_RemovableByClick | Mesh_CollidesMesh,
                         GREEN
                     };
-                    v2_r32 MeshPosition = {GetRand(500.0f, 900.0f), GetRand(0.0f, 900.0f)};
+                    v2_r32 VertexPosition = { GetRand(500.0f, 1100.0f), GetRand(0.0f, 1100.0f) };
+                    r32 Rotation = -2.0f * PI / (r32)NumberOfVertices;
+                    r32 VecLength = GetRand(50.0f, 100.0f);
+                    v2_r32 AddedVector = VectorRotate({ VecLength, 0.0f }, {}, 0.0f);
                     for (u32 VertexIndex = 0;
                         VertexIndex < GeneratedMesh.NumberOfVertices;
                         ++VertexIndex)
                     {
-                        GeneratedMesh.VertexPositions[VertexIndex] = {
-                            GetRand(0.0f, 200.0f) + MeshPosition.x,
-                            GetRand(0.0f, 200.0f) + MeshPosition.y};
+                        GeneratedMesh.VertexPositions[VertexIndex] = VertexPosition;
+                        VertexPosition += AddedVector;
+                        AddedVector = VectorRotate(AddedVector, {}, Rotation);
                     }
                     PushEvent(&GameState->Tables.Events_AddMesh, {
                         GameState->FrameCounter + GameState->TargetFPS,
@@ -141,7 +143,7 @@ Transform_DispatchMeshByTags(game_state *GameState, raylib_wrapper_code *RL)
 }
 
 internal void
-Transform_ClickMesh(game_state *GameState, v2_r32 MousePosition)
+Transform_ClickMesh(game_state *GameState)
 {
     // TODO(david): spatial partitioning
 
@@ -149,7 +151,7 @@ Transform_ClickMesh(game_state *GameState, v2_r32 MousePosition)
          Iteration < GameState->Tables.Meshes.CurrentSize;
          ++Iteration)
     {
-        if (PolyVsPoint(&GameState->Tables.Meshes.Data[Iteration], MousePosition))
+        if (PolyVsPoint(&GameState->Tables.Meshes.Data[Iteration], GameState->MousePosition))
         {
             GameState->Tables.Meshes.Data[Iteration].Flags |= Mesh_Clicked;
         }
@@ -170,11 +172,11 @@ Transform_UnclickMesh(game_state *GameState)
 internal inline void
 Transform_DrawTexts(game_state *GameState, raylib_wrapper_code *RL)
 {
-    for (u32 Iteration = 0;
-         Iteration < GameState->Tables.Texts.CurrentSize;
-         ++Iteration)
+    for (u32 Index = 0;
+         Index < GameState->Tables.Texts.CurrentSize;
+         ++Index)
     {
-        text *Text = &GameState->Tables.Texts.Data[Iteration];
+        text *Text = &GameState->Tables.Texts.Data[Index];
         ASSERT(Text->MeshForeignKey < GameState->Tables.Meshes.CurrentSize);
         v2_r32 Position = GameState->Tables.Meshes.Data[Text->MeshForeignKey].VertexPositions[0];
 
@@ -196,4 +198,62 @@ Transform_MeshEventHandler_AddMesh(game_state *GameState)
         GameState->Tables.Meshes.Data[GameState->Tables.Events_AddMesh.Data[0].MeshForeignKey].Flags |= Mesh_Shown;
         PopEvent(&GameState->Tables.Events_AddMesh);
     }
+}
+
+internal inline void
+Transform_MeshVsMesh(game_state *GameState)
+{
+    // TODO(david): spatial partitioning
+
+    u32 NumberOfMeshes = GameState->Tables.Meshes.CurrentSize;
+    u32 *OverlapQueue = PushArray(&GameState->TransientArena, NumberOfMeshes, u32);
+    for (u32 Index = 0;
+         Index < NumberOfMeshes;
+         ++Index)
+    {
+        OverlapQueue[Index] = Index;
+    }
+    u32 OverlapQueueSize = NumberOfMeshes;
+    u32 DebugNumberOfIterations = 0;
+
+    while (OverlapQueueSize)
+    {
+        u32 OuterIndex = OverlapQueue[--OverlapQueueSize];
+        mesh *CurrentMesh = &GameState->Tables.Meshes.Data[OuterIndex];
+        if ((CurrentMesh->Flags & (Mesh_CollidesMesh | Mesh_Shown)) == (Mesh_CollidesMesh | Mesh_Shown))
+        {
+            for (u32 InnerIndex = 0;
+                InnerIndex < NumberOfMeshes;
+                ++InnerIndex)
+            {
+                if (OuterIndex != InnerIndex)
+                {
+                    mesh *ComparedToMesh = &GameState->Tables.Meshes.Data[InnerIndex];
+                    if ((ComparedToMesh->Flags & (Mesh_CollidesMesh | Mesh_Shown)) == (Mesh_CollidesMesh | Mesh_Shown))
+                    {
+                        v2_r32 MinimumTranslationVector = {};
+                        BEGIN_TIMED_BLOCK(Reserved4);
+                        b32 AreOverlapped = PolyVsPoly(ComparedToMesh, CurrentMesh, &MinimumTranslationVector);
+                        END_TIMED_BLOCK(Reserved4);
+                        if (AreOverlapped)
+                        {
+                            r32 PushOutMultiplier = 1.3f;
+                            for (u32 VertexIndex = 0;
+                                VertexIndex < ComparedToMesh->NumberOfVertices;
+                                ++VertexIndex)
+                            {
+                                ComparedToMesh->VertexPositions[VertexIndex] += MinimumTranslationVector * PushOutMultiplier;
+                            }
+                            OverlapQueue[OverlapQueueSize++] = InnerIndex;
+                            break ;
+                        }
+                    }
+                }
+            }
+        }
+
+        ASSERT(++DebugNumberOfIterations < NumberOfMeshes * 4);
+    }
+
+    PopArray(GameState->TransientArena, NumberOfMeshes, u32);
 }

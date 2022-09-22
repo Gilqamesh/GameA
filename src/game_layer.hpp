@@ -7,11 +7,6 @@
 # include "data_tags.hpp"
 
 #if defined(G_DEBUG)
-struct debug_cycle_counter
-{
-    u64 CycleCount;
-    u32 HitCount;
-};
 
 enum
 {
@@ -33,6 +28,12 @@ enum
     DebugGlobalInfo->Counters[DebugCycleCounter_##ID].CycleCount += __rdtsc() - StartCycleCount##ID;\
     ++DebugGlobalInfo->Counters[DebugCycleCounter_##ID].HitCount;\
 }
+
+struct debug_cycle_counter
+{
+    u64 CycleCount;
+    u32 HitCount;
+};
 
 struct debug_info
 {
@@ -136,6 +137,14 @@ struct render_textures
     RenderTexture2D Main;
 };
 
+struct world_camera
+{
+    v2_r32  Target;
+    v2_r32  Offset;
+    r32     Scale;
+    v2_r32  Rotation;
+};
+
 struct game_state
 {
     memory_arena    TableArena;
@@ -148,6 +157,13 @@ struct game_state
     u32             FrameCounter;
     u32             TargetFPS;
     debug_info      DebugInfo;
+
+    world_camera    WorldCamera;
+    v2_r32          MousePosition;
+    v2_r32          MouseDelta;
+    r32             ZoomTarget;
+
+    b32             ShouldSortMeshes;
 };
 
 #endif

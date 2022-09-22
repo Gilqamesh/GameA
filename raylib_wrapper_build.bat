@@ -4,7 +4,7 @@ set CommonCompilerFlags=-Oi -O2 -FC -Zi -nologo -EHa -MD -DG_DEBUG=1
 set CommonLinkerFlags=-incremental:no -opt:ref -subsystem:WINDOWS raylib.lib user32.lib opengl32.lib gdi32.lib winmm.lib Shell32.lib
 
 pushd build
-cl %CommonCompilerFlags% ../src/raylib_wrapper.cpp -LD /link %CommonLinkerFlags% ^
+cl %CommonCompilerFlags% ../src/raylib_wrapper.cpp -Fmraylib_wrapper.map -LD /link %CommonLinkerFlags% ^
     -EXPORT:RL_InitWindow^
     -EXPORT:RL_WindowShouldClose^
     -EXPORT:RL_CloseWindow^

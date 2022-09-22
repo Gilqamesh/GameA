@@ -118,10 +118,10 @@ int WINAPI WinMain(
     game_window GameWindow = {};
 
 #if !defined(SINGLE_FILE_BUILD)
-    GameMemory.RaylibWrapper = LoadRaylibWrapperDLL("build/raylib_wrapper.dll");
-    char *SourceGameCodeDLLPath = "build/game_layer.dll";
-    char *TempGameCodeDLLPath = "build/game_layer_temp.dll";
-    char *GameCodeLockPath = "build/lock.tmp";
+    GameMemory.RaylibWrapper = LoadRaylibWrapperDLL("raylib_wrapper.dll");
+    char *SourceGameCodeDLLPath = "game_layer.dll";
+    char *TempGameCodeDLLPath = "game_layer_temp.dll";
+    char *GameCodeLockPath = "lock.tmp";
     Game = Win32LoadGameCode(SourceGameCodeDLLPath,
                              TempGameCodeDLLPath,
                              GameCodeLockPath);

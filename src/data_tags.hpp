@@ -69,7 +69,7 @@ enum mesh_flags
     Mesh_Event_AddMesh      = (1 << 1),
     Mesh_Shown              = (1 << 2),
     Mesh_RemovableByClick   = (1 << 3),
-    Mesh_Reserved2          = (1 << 4),
+    Mesh_CollidesMesh       = (1 << 4),
     Mesh_Reserved3          = (1 << 5),
     Mesh_Reserved4          = (1 << 6),
     Mesh_Reserved5          = (1 << 7),

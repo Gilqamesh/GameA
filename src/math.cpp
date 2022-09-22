@@ -244,34 +244,37 @@ internal b32
 PolyVsPoly(mesh *MeshA, mesh *MeshB, Vector2 *MinimumTranslationVectorA = 0)
 {
     u32 NumberOfNormals = MeshA->NumberOfVertices + MeshB->NumberOfVertices;
-    r32 MinOverlap;
+    r32 MinOverlap = INFINITY;
     Vector2 MinOverlapDirectionA = {};
     for (u32 NormalIndex = 0;
          NormalIndex < NumberOfNormals;
          ++NormalIndex)
     {
+BEGIN_TIMED_BLOCK(Reserved5);
         Vector2 Normal;
         if (NormalIndex < MeshA->NumberOfVertices - 1)
         {
-            Normal = VectorNormal(MeshA->VertexPositions[NormalIndex + 1] - MeshA->VertexPositions[NormalIndex]);
+            Normal = VectorNormalize(VectorNormal(MeshA->VertexPositions[NormalIndex + 1] - MeshA->VertexPositions[NormalIndex]));
         }
         else if (NormalIndex == MeshA->NumberOfVertices - 1)
         {
-            Normal = VectorNormal(MeshA->VertexPositions[0] - MeshA->VertexPositions[NormalIndex]);
+            Normal = VectorNormalize(VectorNormal(MeshA->VertexPositions[0] - MeshA->VertexPositions[NormalIndex]));
         }
         else if (NormalIndex - MeshA->NumberOfVertices < MeshB->NumberOfVertices - 1)
         {
-            Normal = VectorNormal(MeshB->VertexPositions[NormalIndex - MeshA->NumberOfVertices + 1] - MeshB->VertexPositions[NormalIndex - MeshA->NumberOfVertices]);
+            Normal = VectorNormalize(VectorNormal(MeshB->VertexPositions[NormalIndex - MeshA->NumberOfVertices + 1] - MeshB->VertexPositions[NormalIndex - MeshA->NumberOfVertices]));
         }
         else if (NormalIndex - MeshA->NumberOfVertices == MeshB->NumberOfVertices - 1)
         {
-            Normal = VectorNormal(MeshB->VertexPositions[0] - MeshB->VertexPositions[NormalIndex - MeshA->NumberOfVertices]);
+            Normal = VectorNormalize(VectorNormal(MeshB->VertexPositions[0] - MeshB->VertexPositions[NormalIndex - MeshA->NumberOfVertices]));
         }
         else
         {
             ASSERT(false);
         }
+END_TIMED_BLOCK(Reserved5);
 
+BEGIN_TIMED_BLOCK(Reserved6);
         // get min and max projections from A onto the normal
         r32 MinProjectionA = Inner(MeshA->VertexPositions[0], Normal);
         r32 MaxProjectionA = MinProjectionA;
@@ -295,54 +298,35 @@ PolyVsPoly(mesh *MeshA, mesh *MeshB, Vector2 *MinimumTranslationVectorA = 0)
             if (CurrentProj < MinProjectionB) MinProjectionB = CurrentProj;
             if (CurrentProj > MaxProjectionB) MaxProjectionB = CurrentProj;
         }
+END_TIMED_BLOCK(Reserved6);
 
-        // if there is a gap in between the intervals, then the two polygons are not overlapped
-        if (!((MinProjectionA < MaxProjectionB && MinProjectionA > MinProjectionB) ||
-             (MinProjectionB < MaxProjectionA && MinProjectionB > MinProjectionA)))
+BEGIN_TIMED_BLOCK(Reserved7);
+        b32 GapExists = !((MinProjectionA < MaxProjectionB && MinProjectionA > MinProjectionB) ||
+             (MinProjectionB < MaxProjectionA && MinProjectionB > MinProjectionA));
+END_TIMED_BLOCK(Reserved7);
+        if (GapExists)
         {
             return (false);
         }
+BEGIN_TIMED_BLOCK(Reserved8);
         if (MinimumTranslationVectorA)
         {
             float Overlap = min(abs(MaxProjectionA - MinProjectionB), abs(MaxProjectionB - MinProjectionA));
 
             // update minimum overlap for mtv
-            if (NormalIndex == 0)
-            {
-                MinOverlap = Overlap;
-                MinOverlapDirectionA = Normal;
-            }
-            else if (Overlap < MinOverlap)
+            if (Overlap < MinOverlap)
             {
                 MinOverlap = Overlap;
                 MinOverlapDirectionA = Normal;
             }
         }
+END_TIMED_BLOCK(Reserved8);
     }
 
-    MinOverlapDirectionA = VectorNormalize(MinOverlapDirectionA);
     MinOverlapDirectionA *= MinOverlap;
     if (MinimumTranslationVectorA)
     {
-        Vector2 MidPointA = {};
-        Vector2 MidPointB = {};
-        for (u32 i = 0;
-            i < MeshA->NumberOfVertices;
-            ++i)
-        {
-            MidPointA = MidPointA + MeshA->VertexPositions[i];
-        }
-        MidPointA = MidPointA / (r32)MeshA->NumberOfVertices;
-        for (u32 i = 0;
-            i < MeshB->NumberOfVertices;
-            ++i)
-        {
-            MidPointB = MidPointB + MeshB->VertexPositions[i];
-        }
-        MidPointB = MidPointB / (r32)MeshB->NumberOfVertices;
-        Vector2 AB = MidPointB - MidPointA;
-
-        MinOverlapDirectionA = MinOverlapDirectionA * MinOverlap;
+        v2_r32 AB = MeshB->VertexPositions[0] - MeshA->VertexPositions[0];
         r32 OverlapDir = Inner(MinOverlapDirectionA, AB);
         if (OverlapDir > 0.0f)
         {
