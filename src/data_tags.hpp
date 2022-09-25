@@ -81,7 +81,7 @@ enum mesh_flags
 
 struct mesh // 64B
 {
-    v2_r32  VertexPositions[6];
+    v2_r32  VertexPositions[5];
     u32     NumberOfVertices;
     // TODO(david): problem with storing flags here is that now we cant
     // sort meshes based on their flags to optimize for the instruction prefetcher
@@ -92,6 +92,8 @@ struct mesh // 64B
     // and sort all other tables which include a MeshForeignKey as well
     u32     Flags;
     Color   color;
+    // NOTE(david): by storing the direction of flow, it makes for a consistent chain collision resolution
+    v2_r32  FlowDirection;
     u32     Reserved;
 };
 static_assert(sizeof(mesh) % 64 == 0);

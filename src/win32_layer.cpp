@@ -104,7 +104,14 @@ int WINAPI WinMain(
 #if defined(SINGLE_FILE_BUILD)
     GameMemory.PermanentStorage = malloc(TotalStorageSize);
 #else
-    GameMemory.PermanentStorage = VirtualAlloc(0, TotalStorageSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+
+#if defined (G_DEBUG)
+    LPVOID BaseAddress = (LPVOID)Terabytes(2);
+#else
+    LPVOID BaseAddress = 0;
+#endif
+
+    GameMemory.PermanentStorage = VirtualAlloc(BaseAddress, TotalStorageSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 #endif
     if (GameMemory.PermanentStorage == 0)
     {

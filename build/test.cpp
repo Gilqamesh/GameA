@@ -1,7 +1,8 @@
-#include "../src/platform.hpp"
 #include <random>
+#include "../src/platform.hpp"
 #include "../src/raylib.h"
-#include "../src/utils.hpp"
+#include "../src/game_layer_types.hpp"
+#include "../src/game_layer_types.cpp"
 #include "../src/raylib_wrapper.cpp"
 #include "../src/data_tags.hpp"
 #include "../src/math.cpp"
@@ -12,24 +13,9 @@ int main()
 
     SetTargetFPS(60);
 
-    // v2_r32 TriangleA[3] = {
-    //     { 300.0f, 300.0f },
-    //     { 600.0f, 500.0f },
-    //     { 450.0f, 800.0f }
-    // };
-    mesh MeshA = {
-        {
-            { 300.0f, 300.0f },
-            { 600.0f, 500.0f },
-            { 450.0f, 800.0f }
-        },
-        3
-    };
-
-    v2_r32 TriangleB[3] = {
-        { 0.0f, 0.0f },
-        { 200.0f, 30.0f },
-        { 60.0f, 100.0f }
+    mesh StartMesh = {
+        { { 0.0f, 0.0f }, { 100.0f, -40.0f }, { 130.0f, 40.0f }, { 60.0f, 70.0f }, { -20.0f, 40.0f } },
+        5
     };
 
     while (WindowShouldClose() == false)
@@ -38,29 +24,25 @@ int main()
         ClearBackground(WHITE);
 
         v2_r32 MousePos = GetMousePosition();
-        mesh MeshB = {};
-        MeshB.NumberOfVertices = 3;
-        for (u32 i = 0; i < ArrayCount(TriangleB); ++i)
+        mesh MouseMesh = StartMesh;
+        for (u32 i = 0; i < StartMesh.NumberOfVertices; ++i)
         {
-            MeshB.VertexPositions[i] = TriangleB[i] + MousePos;
+            MouseMesh.VertexPositions[i] += MousePos;
         }
 
-        Color color = GREEN;
+        Color color = RED;
 
-        v2_r32 MinimumTranslationVector = {};
-        if (PolyVsPoly(&MeshB, &MeshA, &MinimumTranslationVector))
+        v4_i32 AABB = { 500, 400, 300, 200 };
+
+        v4_r32 MousePolyAABB = GetPolyAABB(&MouseMesh);
+        if (v4_r32_vs_v4_i32(MousePolyAABB, AABB))
         {
             color = BLUE;
         }
 
-        for (u32 i = 0; i < MeshB.NumberOfVertices; ++i)
-        {
-            MeshB.VertexPositions[i] += MinimumTranslationVector;
-        }
-        SetMousePosition(MousePos.x + MinimumTranslationVector.x, MousePos.y + MinimumTranslationVector.y);
-
-        DrawPolygon(MeshA.VertexPositions, MeshA.NumberOfVertices, color);
-        DrawPolygon(MeshB.VertexPositions, MeshB.NumberOfVertices, color);
+        DrawPolygon((Vector2*)MouseMesh.VertexPositions, MouseMesh.NumberOfVertices, color);
+        DrawRectangleRec(AABB, color);
+        DrawRectangleLinesEx(MousePolyAABB, 2.0f, color);
 
         EndDrawing();
     }

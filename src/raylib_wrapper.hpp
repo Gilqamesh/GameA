@@ -1,7 +1,6 @@
 #ifndef RAYLIB_WRAPPER_HPP
 #define RAYLIB_WRAPPER_HPP
 
-#include "types.hpp"
 #include <string>
 
 using namespace std;
@@ -60,6 +59,8 @@ struct AudioStream;
 
 typedef void (*TraceLogCallback)(int logType, const char *text, va_list args);
 typedef void (*AudioCallback)(void *bufferData, unsigned int frames);
+
+#include "types.hpp"
 
 // core
 

@@ -6,11 +6,7 @@
  */
 
 # include "types.hpp"
-# include <string>
-
-# if defined(G_DEBUG)
-#  include <intrin.h>
-# endif
+# include "raylib_wrapper.hpp"
 
 # define internal static
 # define local_persist static
@@ -39,8 +35,6 @@ struct game_window
     u32 Width;
     u32 Height;
 };
-
-# include "raylib_wrapper.hpp"
 
 typedef void (*platform_sleep)(u32);
 

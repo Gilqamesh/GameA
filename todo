@@ -1,0 +1,2 @@
+the entire world should be stored in subregions (not as a contiguous block, but rather sparsely)
+    each region has a unique index and its own local space (for precision reasons)

@@ -1,41 +1,71 @@
-internal inline Color
-operator-(Color C1, Color C2)
-{
-    C1.r -= C2.r;
-    C1.g -= C2.g;
-    C1.b -= C2.b;
-    C1.a -= C2.a;
+global_variable random_device gDevice;
+global_variable mt19937 gRNG(gDevice());
+global_variable b32 gIsDeviceSeeded;
 
-    return (C1);
+inline r32
+GetRand(r32 Low, r32 High)
+{
+    uniform_real_distribution<r32> Dist(Low, High);
+    if (gIsDeviceSeeded == false)
+    {
+        gIsDeviceSeeded = true;
+        gRNG.seed(42);
+    }
+    return (Dist(gRNG));
 }
 
-internal inline Color
-operator+(Color C1, Color C2)
+inline i16
+GetRand(i16 Low, i16 High)
 {
-    C1.r += C2.r;
-    C1.g += C2.g;
-    C1.b += C2.b;
-    C1.a += C2.a;
-
-    return (C1);
+    uniform_int_distribution<i16> Dist(Low, High);
+    if (gIsDeviceSeeded == false)
+    {
+        gIsDeviceSeeded = true;
+        gRNG.seed(42);
+    }
+    return (Dist(gRNG));
 }
 
-internal inline Vector2
+inline i32
+GetRand(i32 Low, i32 High)
+{
+    uniform_int_distribution<i32> Dist(Low, High);
+    if (gIsDeviceSeeded == false)
+    {
+        gIsDeviceSeeded = true;
+        gRNG.seed(42);
+    }
+    return (Dist(gRNG));
+}
+
+inline i64
+GetRand(i64 Low, i64 High)
+{
+    uniform_int_distribution<i64> Dist(Low, High);
+    if (gIsDeviceSeeded == false)
+    {
+        gIsDeviceSeeded = true;
+        gRNG.seed(42);
+    }
+    return (Dist(gRNG));
+}
+
+internal inline v2_r32
 VectorNull(void)
 {
     return {0.0f, 0.0f};
 }
 
 internal inline b32
-VectorIsNull(Vector2 Vec)
+VectorIsNull(v2_r32 Vec)
 {
-    return (Vec.x == 0.0f && Vec.y == 0.0f);
+    return (Vec.X == 0.0f && Vec.Y == 0.0f);
 }
 
 internal inline r32
-Inner(Vector2 V, Vector2 W)
+Inner(v2_r32 V, v2_r32 W)
 {
-    return (V.x * W.x + V.y * W.y);
+    return (V.X * W.X + V.Y * W.Y);
 }
 
 internal inline r32
@@ -44,16 +74,16 @@ Square(r32 X)
     return (X * X);
 }
 
-internal inline Vector2
-VectorRotate(Vector2 Vec, Vector2 Origin, r32 Rotation)
+internal inline v2_r32
+VectorRotate(v2_r32 Vec, v2_r32 Origin, r32 Rotation)
 {
     // Translate it by origin
     Vec = Vec - Origin;
 
     // Rotate it
-    r32 X = Vec.x;
-    Vec.x = X * cos(Rotation) - Vec.y * sin(Rotation);
-    Vec.y = X * sin(Rotation) + Vec.y * cos(Rotation);
+    r32 X = Vec.X;
+    Vec.X = X * cos(Rotation) - Vec.Y * sin(Rotation);
+    Vec.Y = X * sin(Rotation) + Vec.Y * cos(Rotation);
 
     // Translate it back by origin
     Vec = Vec + Origin;
@@ -62,64 +92,64 @@ VectorRotate(Vector2 Vec, Vector2 Origin, r32 Rotation)
 }
 
 internal inline r32
-VectorLen(Vector2 Vec)
+VectorLen(v2_r32 Vec)
 {
     return (sqrt(Inner(Vec, Vec)));
 }
 
-internal inline Vector2
-VectorNormalize(Vector2 Vec)
+internal inline v2_r32
+VectorNormalize(v2_r32 Vec)
 {
-    Vector2 Result = Vec;
+    v2_r32 Result = Vec;
 
     r32 Len = VectorLen(Result);
-    Result.x /= Len;
-    Result.y /= Len;
+    Result.X /= Len;
+    Result.Y /= Len;
 
     return (Result);
 }
 
-internal inline Vector2
-VectorHadamard(Vector2 V, Vector2 W)
+internal inline v2_r32
+VectorHadamard(v2_r32 V, v2_r32 W)
 {
-    V.x *= W.x;
-    V.y *= W.y;
+    V.X *= W.X;
+    V.Y *= W.Y;
 
     return (V);
 }
 
-internal inline Vector2
-VectorClamp(Vector2 Vec, r32 Min, r32 Max)
+internal inline v2_r32
+Clamp(v2_r32 Vec, r32 Min, r32 Max)
 {
-    if (Vec.x < Min) Vec.x = Min;
-    if (Vec.y < Min) Vec.y = Min;
-    if (Vec.x > Max) Vec.x = Max;
-    if (Vec.y > Max) Vec.y = Max;
+    if (Vec.X < Min) Vec.X = Min;
+    if (Vec.Y < Min) Vec.Y = Min;
+    if (Vec.X > Max) Vec.X = Max;
+    if (Vec.Y > Max) Vec.Y = Max;
 
     return (Vec);
 }
 
-internal inline Vector2
-VectorNormal(Vector2 Vec)
+internal inline v2_r32
+VectorNormal(v2_r32 Vec)
 {
-    r32 Tmp = Vec.x;
-    Vec.x = -Vec.y;
-    Vec.y = Tmp;
+    r32 Tmp = Vec.X;
+    Vec.X = -Vec.Y;
+    Vec.Y = Tmp;
 
     return (Vec);
 }
 
-internal inline Color
-ColorClamp(Color color, u32 Min, u32 Max)
+internal inline v4_u8
+Clamp(v4_u8 color, u32 Min, u32 Max)
 {
-    if (color.r < Min) color.r = Min;
-    if (color.g < Min) color.g = Min;
-    if (color.b < Min) color.b = Min;
-    if (color.a < Min) color.a = Min;
-    if (color.r > Max) color.r = Max;
-    if (color.g > Max) color.g = Max;
-    if (color.b > Max) color.b = Max;
-    if (color.a > Max) color.a = Max;
+    if (color.R < Min) color.R = Min;
+    if (color.G < Min) color.G = Min;
+    if (color.B < Min) color.B = Min;
+    if (color.A < Min) color.A = Min;
+    if (color.R > Max) color.R = Max;
+    if (color.G > Max) color.G = Max;
+    if (color.B > Max) color.B = Max;
+    if (color.A > Max) color.A = Max;
 
     return (color);
 }
@@ -134,22 +164,22 @@ Clamp(r32 X, r32 Min, r32 Max)
 }
 
 internal inline b32
-PointVsRec(v2_r32 P, Rec rec)
+PointVsRec(v2_r32 P, v4_r32 Rec)
 {
-    return (P.x >= rec.x && P.x <= rec.x + rec.width &&
-            P.y >= rec.y && P.y <= rec.y + rec.height);
+    return (P.X >= Rec.X && P.X <= Rec.X + Rec.W &&
+            P.Y >= Rec.Y && P.Y <= Rec.Y + Rec.H);
 }
 
 internal inline b32
 PointVsRec(v2_r32 Point, r32 RecX, r32 RecY, r32 RecW, r32 RecH)
 {
-    return (Point.x >= RecX && Point.x <= RecX + RecW && Point.y >= RecY && Point.y <= RecY + RecH);
+    return (Point.X >= RecX && Point.X <= RecX + RecW && Point.Y >= RecY && Point.Y <= RecY + RecH);
 }
 
 internal inline b32
-CircleVsCircle(Vector2 P, r32 RadiusP, Vector2 Q, r32 RadiusQ)
+CircleVsCircle(v2_r32 P, r32 RadiusP, v2_r32 Q, r32 RadiusQ)
 {
-    Vector2 PQ = {P.x - Q.x, P.y - Q.y};
+    v2_r32 PQ = {P.X - Q.X, P.Y - Q.Y};
     r32 DistanceSq = Inner(PQ, PQ);
 
     return (DistanceSq < Square(RadiusP + RadiusQ));
@@ -157,7 +187,7 @@ CircleVsCircle(Vector2 P, r32 RadiusP, Vector2 Q, r32 RadiusQ)
 
 // vertices needs to follow clockwise ordered orientation
 internal inline b32
-CircleVsTriangle(Vector2 O, r32 Radius, Vector2 A, Vector2 B, Vector2 C, Vector2 Circumcenter, r32 Rotation)
+CircleVsTriangle(v2_r32 O, r32 Radius, v2_r32 A, v2_r32 B, v2_r32 C, v2_r32 Circumcenter, r32 Rotation)
 {
     A = VectorRotate(A, Circumcenter, Rotation);
     B = VectorRotate(B, Circumcenter, Rotation);
@@ -178,9 +208,9 @@ CircleVsTriangle(Vector2 O, r32 Radius, Vector2 A, Vector2 B, Vector2 C, Vector2
     }
 
     // Check if circle center is within triangle
-    if ((B.y - A.y) * (O.x - A.x) - (B.x - A.x) * (O.y - A.y) >= 0 &&
-        (C.y - B.y) * (O.x - B.x) - (C.x - B.x) * (O.y - B.y) >= 0 &&
-        (A.y - C.y) * (O.x - C.x) - (A.x - C.x) * (O.y - C.y) >= 0)
+    if ((B.Y - A.Y) * (O.X - A.X) - (B.X - A.X) * (O.Y - A.Y) >= 0 &&
+        (C.Y - B.Y) * (O.X - B.X) - (C.X - B.X) * (O.Y - B.Y) >= 0 &&
+        (A.Y - C.Y) * (O.X - C.X) - (A.X - C.X) * (O.Y - C.Y) >= 0)
     {
         return (true);
     }
@@ -241,40 +271,35 @@ CircleVsTriangle(Vector2 O, r32 Radius, Vector2 A, Vector2 B, Vector2 C, Vector2
 }
 
 internal b32
-PolyVsPoly(mesh *MeshA, mesh *MeshB, Vector2 *MinimumTranslationVectorA = 0)
+PolyVsPoly(mesh *MeshA, mesh *MeshB, v2_r32 *MinimumTranslationVectorA = 0)
 {
-    u32 NumberOfNormals = MeshA->NumberOfVertices + MeshB->NumberOfVertices;
     r32 MinOverlap = INFINITY;
-    Vector2 MinOverlapDirectionA = {};
+    v2_r32 MinOverlapDirectionA = {};
+    v2_r32 Normals[ArrayCount(mesh::VertexPositions) + ArrayCount(mesh::VertexPositions)];
+// BEGIN_TIMED_BLOCK(Reserved5);
+    Normals[MeshA->NumberOfVertices - 1] = VectorNormalize(VectorNormal(MeshA->VertexPositions[0] - MeshA->VertexPositions[MeshA->NumberOfVertices - 1]));
+    Normals[MeshB->NumberOfVertices - 1 + MeshA->NumberOfVertices] = VectorNormalize(VectorNormal(MeshB->VertexPositions[0] - MeshB->VertexPositions[MeshB->NumberOfVertices - 1]));
+    for (u32 VertexIndex = 0;
+         VertexIndex < MeshA->NumberOfVertices - 1;
+         ++VertexIndex)
+    {
+        Normals[VertexIndex] = VectorNormalize(VectorNormal(MeshA->VertexPositions[VertexIndex + 1] - MeshA->VertexPositions[VertexIndex]));
+    }
+    for (u32 VertexIndex = 0;
+         VertexIndex < MeshB->NumberOfVertices - 1;
+         ++VertexIndex)
+    {
+        Normals[VertexIndex + MeshA->NumberOfVertices] = VectorNormalize(VectorNormal(MeshB->VertexPositions[VertexIndex + 1] - MeshB->VertexPositions[VertexIndex]));
+    }
+// END_TIMED_BLOCK(Reserved5);
+u32 NumberOfNormals = MeshA->NumberOfVertices + MeshB->NumberOfVertices;
     for (u32 NormalIndex = 0;
          NormalIndex < NumberOfNormals;
          ++NormalIndex)
     {
-BEGIN_TIMED_BLOCK(Reserved5);
-        Vector2 Normal;
-        if (NormalIndex < MeshA->NumberOfVertices - 1)
-        {
-            Normal = VectorNormalize(VectorNormal(MeshA->VertexPositions[NormalIndex + 1] - MeshA->VertexPositions[NormalIndex]));
-        }
-        else if (NormalIndex == MeshA->NumberOfVertices - 1)
-        {
-            Normal = VectorNormalize(VectorNormal(MeshA->VertexPositions[0] - MeshA->VertexPositions[NormalIndex]));
-        }
-        else if (NormalIndex - MeshA->NumberOfVertices < MeshB->NumberOfVertices - 1)
-        {
-            Normal = VectorNormalize(VectorNormal(MeshB->VertexPositions[NormalIndex - MeshA->NumberOfVertices + 1] - MeshB->VertexPositions[NormalIndex - MeshA->NumberOfVertices]));
-        }
-        else if (NormalIndex - MeshA->NumberOfVertices == MeshB->NumberOfVertices - 1)
-        {
-            Normal = VectorNormalize(VectorNormal(MeshB->VertexPositions[0] - MeshB->VertexPositions[NormalIndex - MeshA->NumberOfVertices]));
-        }
-        else
-        {
-            ASSERT(false);
-        }
-END_TIMED_BLOCK(Reserved5);
+        v2_r32 Normal = Normals[NormalIndex];
 
-BEGIN_TIMED_BLOCK(Reserved6);
+// BEGIN_TIMED_BLOCK(Reserved6);
         // get min and max projections from A onto the normal
         r32 MinProjectionA = Inner(MeshA->VertexPositions[0], Normal);
         r32 MaxProjectionA = MinProjectionA;
@@ -298,17 +323,17 @@ BEGIN_TIMED_BLOCK(Reserved6);
             if (CurrentProj < MinProjectionB) MinProjectionB = CurrentProj;
             if (CurrentProj > MaxProjectionB) MaxProjectionB = CurrentProj;
         }
-END_TIMED_BLOCK(Reserved6);
+// END_TIMED_BLOCK(Reserved6);
 
-BEGIN_TIMED_BLOCK(Reserved7);
+// BEGIN_TIMED_BLOCK(Reserved7);
         b32 GapExists = !((MinProjectionA < MaxProjectionB && MinProjectionA > MinProjectionB) ||
              (MinProjectionB < MaxProjectionA && MinProjectionB > MinProjectionA));
-END_TIMED_BLOCK(Reserved7);
+// END_TIMED_BLOCK(Reserved7);
         if (GapExists)
         {
             return (false);
         }
-BEGIN_TIMED_BLOCK(Reserved8);
+// BEGIN_TIMED_BLOCK(Reserved8);
         if (MinimumTranslationVectorA)
         {
             float Overlap = min(abs(MaxProjectionA - MinProjectionB), abs(MaxProjectionB - MinProjectionA));
@@ -320,7 +345,7 @@ BEGIN_TIMED_BLOCK(Reserved8);
                 MinOverlapDirectionA = Normal;
             }
         }
-END_TIMED_BLOCK(Reserved8);
+// END_TIMED_BLOCK(Reserved8);
     }
 
     MinOverlapDirectionA *= MinOverlap;
@@ -339,7 +364,7 @@ END_TIMED_BLOCK(Reserved8);
 }
 
 internal inline b32
-PolyVsCircle(mesh *Mesh, Vector2 Origin, r32 Radius)
+PolyVsCircle(mesh *Mesh, v2_r32 Origin, r32 Radius)
 {
     for (int PointIndex = 0;
          PointIndex < Mesh->NumberOfVertices;
@@ -355,7 +380,7 @@ PolyVsCircle(mesh *Mesh, Vector2 Origin, r32 Radius)
 }
 
 mesh
-ExtendPolygon(mesh *Original, Vector2 Direction)
+ExtendPolygon(mesh *Original, v2_r32 Direction)
 {
     mesh Result = {};
 
@@ -367,7 +392,7 @@ ExtendPolygon(mesh *Original, Vector2 Direction)
         Extended.VertexPositions[i] = Original->VertexPositions[i] + Direction;
     }
 
-    Vector2 Normal = VectorNormal(Direction);
+    v2_r32 Normal = VectorNormal(Direction);
 
     i32 MinIndex = 0;
     i32 MaxIndex = 0;
@@ -415,21 +440,73 @@ ExtendPolygon(mesh *Original, Vector2 Direction)
     return (Result);
 }
 
+internal inline v2_r32
+GetPolyOrigin(mesh *Mesh)
+{
+    v2_r32 Result = {};
+
+    // NOTE(david): currently using normal average
+    // normal average
+    // upsides: precise, less operations
+    // downsides: over/underflow possibility
+    // running average
+    // upsides: no over/underflow possibility
+    // downsides: not precise, more operations
+
+    for (u32 VertexIndex = 0;
+         VertexIndex < Mesh->NumberOfVertices;
+         ++VertexIndex)
+    {
+        Result += Mesh->VertexPositions[VertexIndex];
+    }
+    Result /= Mesh->NumberOfVertices;
+
+    return (Result);
+}
+
 // Works for concave polygons too
-inline b32
+internal inline b32
 PolyVsPoint(mesh *Mesh, v2_r32 P)
 {
     u32 Result = 0;
     
     for (u32 VertexIndexA = 0, VertexIndexB = Mesh->NumberOfVertices - 1; VertexIndexA < Mesh->NumberOfVertices; VertexIndexB = VertexIndexA++)
     {
-        if ((Mesh->VertexPositions[VertexIndexA].y > P.y) != (Mesh->VertexPositions[VertexIndexB].y > P.y))
+        if ((Mesh->VertexPositions[VertexIndexA].Y > P.Y) != (Mesh->VertexPositions[VertexIndexB].Y > P.Y))
         {
-            if (P.x < (Mesh->VertexPositions[VertexIndexB].x - Mesh->VertexPositions[VertexIndexA].x) * (P.y - Mesh->VertexPositions[VertexIndexA].y) / (Mesh->VertexPositions[VertexIndexB].y - Mesh->VertexPositions[VertexIndexA].y) + Mesh->VertexPositions[VertexIndexA].x)
+            if (P.X < (Mesh->VertexPositions[VertexIndexB].X - Mesh->VertexPositions[VertexIndexA].X) * (P.Y - Mesh->VertexPositions[VertexIndexA].Y) / (Mesh->VertexPositions[VertexIndexB].Y - Mesh->VertexPositions[VertexIndexA].Y) + Mesh->VertexPositions[VertexIndexA].X)
             {
                 Result = !Result;
             }
         }
     }
     return (Result);
+}
+
+// TODO(david): don't need to pass in mesh*, only vertices and their numbers
+// Same goes for other functions as well
+internal inline v4_r32
+GetPolyAABB(mesh *Mesh)
+{
+    v2_r32 Min = Mesh->VertexPositions[0];
+    v2_r32 Max = Mesh->VertexPositions[0];
+
+    for (u32 VertexIndex = 1;
+         VertexIndex < Mesh->NumberOfVertices;
+         ++VertexIndex)
+    {
+        if (Mesh->VertexPositions[VertexIndex].X < Min.X) Min.X = Mesh->VertexPositions[VertexIndex].X;
+        if (Mesh->VertexPositions[VertexIndex].X > Max.X) Max.X = Mesh->VertexPositions[VertexIndex].X;
+        if (Mesh->VertexPositions[VertexIndex].Y < Min.Y) Min.Y = Mesh->VertexPositions[VertexIndex].Y;
+        if (Mesh->VertexPositions[VertexIndex].Y > Max.Y) Max.Y = Mesh->VertexPositions[VertexIndex].Y;
+    }
+
+    return { Min.X, Min.Y, Max.X - Min.X, Max.Y - Min.Y };
+}
+
+internal inline b32
+v4_r32_vs_v4_i32(v4_r32 V, v4_i32 A)
+{
+    return (V.X <= (r32)A.X + (r32)A.W && (r32)A.X <= V.X + V.W &&
+            V.Y <= (r32)A.Y + (r32)A.H && (r32)A.Y <= V.Y + V.H);
 }

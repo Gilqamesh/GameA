@@ -1,9 +1,7 @@
 #ifndef GAME_LAYER_HPP
 # define GAME_LAYER_HPP
 
-# include "raylib.h"
 # include <random>
-# include "utils.hpp"
 # include "data_tags.hpp"
 
 #if defined(G_DEBUG)
@@ -37,10 +35,11 @@ struct debug_cycle_counter
 
 struct debug_info
 {
-    u32 LastFrameCycles;
     r64 LastFrameTimeTakenInSeconds;
-    u32 LastFrameTransientMemoryUsed;
     debug_cycle_counter Counters[DebugCycleCounter_Count];
+    b32 Visible;
+    u32 LastFrameCycles;
+    u32 LastFrameTransientMemoryUsed;
 };
 struct debug_info *DebugGlobalInfo;
 
@@ -89,6 +88,10 @@ PushSize_(memory_arena *Arena, memory_index Size)
 #define PopArray(Arena, Count, type) {\
     ASSERT((Arena).Used >= (Count) * sizeof(type));\
     (Arena).Used -= (Count) * sizeof(type);\
+}
+
+#define ZeroArray(Array, Count, type) {\
+    memset(Array, 0, sizeof(type) * (Count));\
 }
 
 template <typename T>
@@ -143,6 +146,7 @@ struct world_camera
     v2_r32  Offset;
     r32     Scale;
     v2_r32  Rotation;
+    v4_r32  Box;
 };
 
 struct game_state
@@ -161,6 +165,7 @@ struct game_state
     world_camera    WorldCamera;
     v2_r32          MousePosition;
     v2_r32          MouseDelta;
+    v2_r32          MouseDeltaFalloff;
     r32             ZoomTarget;
 
     b32             ShouldSortMeshes;

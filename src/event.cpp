@@ -22,7 +22,6 @@ PushEvent(table<event_type> *Table, event_type Event)
 {
     ASSERT(Table->CurrentSize < Table->AllocatedSize);
 
-
     i32 Index = Table->CurrentSize++;
     Table->Data[Index] = Event;
 

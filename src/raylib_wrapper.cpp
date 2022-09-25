@@ -779,7 +779,7 @@ void RL_SetCameraMoveControls(i32 keyFront, i32 keyBack, i32 keyRight, i32 keyLe
 }
 
 // True if P is left of the line defined by A and B
-internal inline b32 IsLeft(Vector2 A, Vector2 B, Vector2 P)
+inline b32 IsLeft(Vector2 A, Vector2 B, Vector2 P)
 {
     return (((B.x - A.x) * (P.y - A.y) - (B.y - A.y) * (P.x - A.x)) > 0.0f);
 }
@@ -1628,7 +1628,9 @@ const char *RL_CodepointToUTF8(i32 codepoint, i32 *byteSize) // Encode one codep
 }
 char *RL_TextCodepointsToUTF8(const i32 *codepoints, i32 length) // Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)
 {
-    return (TextCodepointsToUTF8(codepoints, length));
+    ASSERT(false);
+    return (0);
+    // return (TextCodepointsToUTF8(codepoints, length));
 }
 
 // Text strings management functions (no UTF-8 strings, only byte chars)
