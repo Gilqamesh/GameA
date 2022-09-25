@@ -1,6 +1,14 @@
 # GameA
 Not sure about the name yet
 
+## Inspiration
+Inspired by Richard Fabian's book on Data-oriented design, his website can be found here:
+
+https://www.dataorienteddesign.com/dodbook/
+
+## Goal
+Build a game using data-oriented principles, mostly cache aware data
+
 ## Development
 
 ### 09.25.2022
