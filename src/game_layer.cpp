@@ -40,7 +40,7 @@ extern "C"
             InitializeArena(&GameState->TransientArena, GameMemory->TransientStorageSize,
                             (u8*)GameMemory->TransientStorage);
 
-            GameState->Tables.Meshes.AllocatedSize = 4096;
+            GameState->Tables.Meshes.AllocatedSize = 16384;
             GameState->Tables.Meshes.Data = PushArray(&GameState->TableArena, GameState->Tables.Meshes.AllocatedSize, mesh);
 
             GameState->Tables.Texts.AllocatedSize = 16;

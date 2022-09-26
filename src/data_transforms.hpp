@@ -17,10 +17,18 @@ struct node_mesh // 4B
 };
 static_assert(sizeof(node_mesh) % 4 == 0);
 
-struct node_mesh_container
+struct node_mesh_container // 4B
 {
-    u16 MeshForeignKey[8];
+    u16 MeshForeignKey[2];
 };
-static_assert(sizeof(node_mesh_container) % 16 == 0);
+static_assert(sizeof(node_mesh_container) % 4 == 0);
+
+struct mesh_grid_cell // 32B
+{
+    u16 MeshForeignKey[15];
+    u8 CurrentSize;
+    u8 Reserved;
+};
+static_assert(sizeof(mesh_grid_cell) % 32 == 0);
 
 #endif

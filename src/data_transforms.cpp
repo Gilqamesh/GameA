@@ -227,11 +227,6 @@ SubdivideNodeMesh(mesh *Meshes, node_mesh *MeshNodes, u16 MeshNodesSize, i16 Mes
         { NodeAABB.X + HalfWidth, NodeAABB.Y + HalfHeight, HalfWidth, HalfHeight }
     };
 
-    if (!(*NumberOfMeshNodes < MeshNodesSize))
-    {
-        return ;
-    }
-    // ASSERT(*NumberOfMeshNodes < MeshNodesSize);
     MeshNodes[MeshNodeIndex].Index = *NumberOfMeshNodes;
     *NumberOfMeshNodes += 4;
 
@@ -270,7 +265,6 @@ v4_i32 NodeAABB, v4_r32 MeshAABB, u16 MeshIndex, u32 *InsertRecursiveCounter, u3
     {
         *MaxDepth = CurDepth;
     }
-    // ASSERT(MeshNodeIndex < MeshContainersSize);
     // TODO(david): think about what to do when the space cannot be subdivided anymore
     if (NodeAABB.W <= 1 || NodeAABB.H <= 1)
     {
@@ -286,8 +280,7 @@ v4_i32 NodeAABB, v4_r32 MeshAABB, u16 MeshIndex, u32 *InsertRecursiveCounter, u3
             ++MeshNodes[MeshNodeIndex].NOfMeshes;
             return ;
         }
-        // ASSERT(NodeAABB.W > 1);
-        // ASSERT(NodeAABB.H > 1);
+        // run out of mesh nodes to add
         if (!(*NumberOfMeshNodes < MeshContainersSize))
         {
             return ;
@@ -318,16 +311,15 @@ v4_i32 NodeAABB, v4_r32 MeshAABB, u16 MeshIndex, u32 *InsertRecursiveCounter, u3
 }
 
 internal void
-DebugDrawMeshNodes(game_state *GameState, node_mesh *MeshNodes, u32 MeshNodeIndex, u32 DebugNumberOfMeshNodes, v4_i32 NodeAABB, raylib_wrapper_code *RL,
+DebugDrawMeshNodes(game_state *GameState, node_mesh *MeshNodes, u32 MeshNodeIndex, u32 NumberOfMeshNodes, v4_i32 NodeAABB, raylib_wrapper_code *RL,
     u32 InsertRecursiveCounter, u32 SubdivideRecursiveCounter, u16 MaxDepth)
 {
-    // NOTE(david): Screen width's
     r32 WidthRatio = NodeAABB.W / GameState->WorldCamera.Box.W;
     if (WidthRatio > 0.005f)
     {
         if (MeshNodeIndex == 0)
         {
-            PutTextTopLeft(GameState, RL, ("Number of nodes: " + to_string(DebugNumberOfMeshNodes)).c_str(), {}, GameState->WorldCamera.Box.W * 0.01f, BLACK, GameState->Fonts.Mono72);
+            PutTextTopLeft(GameState, RL, ("Number of nodes: " + to_string(NumberOfMeshNodes)).c_str(), {}, GameState->WorldCamera.Box.W * 0.01f, BLACK, GameState->Fonts.Mono72);
             PutTextTopLeft(GameState, RL, ("InsertRecursiveCounter: " + to_string(InsertRecursiveCounter)).c_str(), {0.0f, 36.0f}, GameState->WorldCamera.Box.W * 0.01f, BLACK, GameState->Fonts.Mono72);
             PutTextTopLeft(GameState, RL, ("SubdivideRecursiveCounter: " + to_string(SubdivideRecursiveCounter)).c_str(), {0.0f, 72.0f}, GameState->WorldCamera.Box.W * 0.01f, BLACK, GameState->Fonts.Mono72);
             PutTextTopLeft(GameState, RL, ("Max insert depth: " + to_string(MaxDepth)).c_str(), {0.0f, 108.0f}, GameState->WorldCamera.Box.W * 0.01f, BLACK, GameState->Fonts.Mono72);
@@ -337,7 +329,7 @@ DebugDrawMeshNodes(game_state *GameState, node_mesh *MeshNodes, u32 MeshNodeInde
         {
             i16 FirstChildIndex = MeshNodes[MeshNodeIndex].Index;
             ASSERT(FirstChildIndex >= 0);
-            ASSERT(FirstChildIndex < DebugNumberOfMeshNodes);
+            ASSERT(FirstChildIndex < NumberOfMeshNodes);
             i32 HalfWidth  = NodeAABB.W >> 1;
             i32 HalfHeight = NodeAABB.H >> 1;
             v4_i32 ChildrenAABB[4] = {
@@ -350,7 +342,7 @@ DebugDrawMeshNodes(game_state *GameState, node_mesh *MeshNodes, u32 MeshNodeInde
                 Index < 4;
                 ++Index)
             {
-                DebugDrawMeshNodes(GameState, MeshNodes, FirstChildIndex + Index, DebugNumberOfMeshNodes, ChildrenAABB[Index], RL,
+                DebugDrawMeshNodes(GameState, MeshNodes, FirstChildIndex + Index, NumberOfMeshNodes, ChildrenAABB[Index], RL,
                     InsertRecursiveCounter, SubdivideRecursiveCounter, MaxDepth);
             }
         }
@@ -358,122 +350,187 @@ DebugDrawMeshNodes(game_state *GameState, node_mesh *MeshNodes, u32 MeshNodeInde
 }
 
 internal void
+DebugDrawHashTableGrids(game_state *GameState, raylib_wrapper_code *RL, mesh_grid_cell *HashTable, v2_u32 HashTableDims, v2_r32 GridDims)
+{
+    r32 YOffset = GameState->WorldCamera.Box.Y;
+    r32 XOffset = GameState->WorldCamera.Box.X + GameState->WorldCamera.Box.W / 2.0f;
+    r32 HashTableFillRate = 0.0f;
+    u32 NumberOfFilledGrids = 0;
+    for (u32 GridIndex = 0;
+         GridIndex < HashTableDims.X * HashTableDims.Y;
+         ++GridIndex)
+    {
+        HashTableFillRate += (r32)HashTable[GridIndex].CurrentSize;
+        if (HashTable[GridIndex].CurrentSize == ArrayCount(mesh_grid_cell::MeshForeignKey))
+        {
+            ++NumberOfFilledGrids;
+        }
+    }
+    HashTableFillRate /= (r32)(HashTableDims.X * HashTableDims.Y) * ArrayCount(mesh_grid_cell::MeshForeignKey);
+
+    PutTextTopLeft(GameState, RL, ("Grid dimensions: " + to_string(GridDims.X) + " " + to_string(GridDims.Y)).c_str(),
+        { XOffset, YOffset }, GameState->WorldCamera.Box.W * 0.01f, BLACK, GameState->Fonts.Mono72);
+    YOffset += GameState->WorldCamera.Box.H / 60.0f;
+
+    PutTextTopLeft(GameState, RL, ("Hash Table Dimensions: " + to_string(HashTableDims.X) + " " + to_string(HashTableDims.Y)).c_str(),
+        { XOffset, YOffset }, GameState->WorldCamera.Box.W * 0.01f, BLACK, GameState->Fonts.Mono72);
+    YOffset += GameState->WorldCamera.Box.H / 60.0f;
+
+    PutTextTopLeft(GameState, RL, ("Hash Table Fill Ratio: " + to_string(HashTableFillRate)).c_str(),
+        { XOffset, YOffset }, GameState->WorldCamera.Box.W * 0.01f, BLACK, GameState->Fonts.Mono72);
+    YOffset += GameState->WorldCamera.Box.H / 60.0f;
+
+    PutTextTopLeft(GameState, RL, ("Number of filled grids: " + to_string(NumberOfFilledGrids)).c_str(),
+        { XOffset, YOffset }, GameState->WorldCamera.Box.W * 0.01f, BLACK, GameState->Fonts.Mono72);
+    YOffset += GameState->WorldCamera.Box.H / 60.0f;
+
+    r32 WidthRatio = GridDims.X / GameState->WorldCamera.Box.W;
+    if (WidthRatio > 0.005f)
+    {
+        for (i32 GridX = (i32)(floor(GameState->WorldCamera.Box.X / GridDims.X) * GridDims.X);
+             GridX <= GameState->WorldCamera.Box.X + GameState->WorldCamera.Box.W;
+             GridX += GridDims.X)
+        {
+            RL->DrawLineEx({ (r32)GridX, (r32)GameState->WorldCamera.Box.Y }, { (r32)GridX, (r32)(GameState->WorldCamera.Box.Y + GameState->WorldCamera.Box.H) },
+                GameState->WorldCamera.Box.W * 0.001f, RED);
+        }
+        for (i32 GridY = (i32)floor(GameState->WorldCamera.Box.Y / GridDims.Y) * GridDims.Y;
+             GridY <= GameState->WorldCamera.Box.Y + GameState->WorldCamera.Box.H;
+             GridY += GridDims.Y)
+        {
+            RL->DrawLineEx({ (r32)GameState->WorldCamera.Box.X, (r32)GridY }, { (r32)(GameState->WorldCamera.Box.X + GameState->WorldCamera.Box.W), (r32)GridY },
+                GameState->WorldCamera.Box.W * 0.001f, RED);
+        }
+    }
+}
+
+internal void
 Transform_MeshVsMesh(game_state *GameState, raylib_wrapper_code *RL)
 {
-    // NOTE(david): current limitations of this spatial partitioning data structure:
-    //  1. upper bound on agent size (currently handled)
-    //  2. there cant be "too many" overlapping agents at one location (currently unhandled, resulting in UB)
-
     u32 NumberOfMeshes = GameState->Tables.Meshes.CurrentSize;
-    u32 ArbitraryNumberOfNodes = 512; // 2,048 B
-    node_mesh *MeshNodes = PushArray(&GameState->TransientArena, ArbitraryNumberOfNodes, node_mesh);
-    ZeroArray(MeshNodes, ArbitraryNumberOfNodes, node_mesh);
-    u16 NumberOfMeshNodes = 1;
-    u32 ArbitraryNumberOfMeshContainers = 512; // 32,768 B
-    node_mesh_container *MeshContainers = PushArray(&GameState->TransientArena, ArbitraryNumberOfMeshContainers, node_mesh_container);
-    ZeroArray(MeshContainers, ArbitraryNumberOfMeshContainers, node_mesh_container);
-    // TODO(david): think about the region in which we want to check collisions in.. this could be something like an extended camera
-    // or a concept like simulation region
-    i32 RegionHalfW = 131072;
-    v4_i32 CollisionRegion = {
-        -RegionHalfW, -RegionHalfW,
-         2 * RegionHalfW,  2 * RegionHalfW
-    };
-    // NOTE(david): for limitation 1., so that agents don't straddle over too many nodes
-    v2_r32 AABBUpperLimitDims = {
-        200.0f,
-        200.0f
-    };
+    // NOTE(david): each dimension must be power of 2, unless the bitwise and is replaced with mod check during hashing
+    v2_u32 HashTableDims = { 64, 64 };
+    mesh_grid_cell *HashTable = PushArray(&GameState->TransientArena, HashTableDims.X * HashTableDims.Y, mesh_grid_cell);
+    ZeroArray(HashTable, HashTableDims.X * HashTableDims.Y, mesh_grid_cell);
 
-    u32 InsertRecursiveCounter = 0;
-    u32 SubdivideRecursiveCounter = 0;
-    u16 MaxInsertionDepth = 0;
+BEGIN_TIMED_BLOCK(Reserved6);
+    v2_r32 GridDims = {};
+    if (NumberOfMeshes)
+    {
+        v4_r32 PolyAABB = GetPolyAABB(&GameState->Tables.Meshes.Data[0]);
+        GridDims += { PolyAABB.W, PolyAABB.H };
+    }
+    for (u32 MeshIndex = 1;
+         MeshIndex < NumberOfMeshes;
+         ++MeshIndex)
+    {
+        v4_r32 PolyAABB = GetPolyAABB(&GameState->Tables.Meshes.Data[MeshIndex]);
+        GridDims = (GridDims * (r32)(MeshIndex - 1) + v2_r32{ PolyAABB.W, PolyAABB.H }) / (r32)MeshIndex;
+    }
+END_TIMED_BLOCK(Reserved6);
+
+BEGIN_TIMED_BLOCK(Reserved8);
     for (u32 MeshIndex = 0;
          MeshIndex < NumberOfMeshes;
          ++MeshIndex)
     {
-        mesh *Mesh = &GameState->Tables.Meshes.Data[MeshIndex];
-        if (Mesh->Flags & Mesh_CollidesMesh)
+        v4_r32 PolyAABB_v4_r32 = GetPolyAABB(&GameState->Tables.Meshes.Data[MeshIndex]);
+        v4_i32 PolyAABBBounds = {
+            (i32)floor(PolyAABB_v4_r32.X / GridDims.X),
+            (i32)floor(PolyAABB_v4_r32.Y / GridDims.Y),
+            (i32)floor((PolyAABB_v4_r32.X + PolyAABB_v4_r32.W) / GridDims.X),
+            (i32)floor((PolyAABB_v4_r32.Y + PolyAABB_v4_r32.H) / GridDims.Y),
+        };
+        for (i32 GridX = PolyAABBBounds.X;
+             GridX <= PolyAABBBounds.W;
+             ++GridX)
         {
-            v4_r32 PolyAABB = GetPolyAABB(Mesh);
-            if (PolyAABB.W < AABBUpperLimitDims.X && PolyAABB.H < AABBUpperLimitDims.Y)
+            for (i32 GridY = PolyAABBBounds.Y;
+                 GridY <= PolyAABBBounds.H;
+                 ++GridY)
             {
-                b32 MeshIsInCollisionRegion = v4_r32_vs_v4_i32(PolyAABB, CollisionRegion);
-                if (MeshIsInCollisionRegion)
+                i32 ModX = GridX & (HashTableDims.X - 1);
+                i32 ModY = GridY & (HashTableDims.Y - 1);
+                if (ModX < 0) ModX += HashTableDims.X;
+                if (ModY < 0) ModY += HashTableDims.Y;
+                u32 HashValue = ModY * HashTableDims.X + ModX;
+                ASSERT(HashValue < HashTableDims.X * HashTableDims.Y);
+                // TODO(david): store an extra array for overflow here, can use the 'Reserved' as an index to it
+                // currently can be 256 extra mesh_grid_cells stored for overflow
+                if (!(HashTable[HashValue].CurrentSize < ArrayCount(mesh_grid_cell::MeshForeignKey)))
                 {
-BEGIN_TIMED_BLOCK(Reserved8);
-                    InsertToNodeMesh(GameState->Tables.Meshes.Data, MeshNodes, ArbitraryNumberOfNodes, 0, &NumberOfMeshNodes, MeshContainers,
-                        ArbitraryNumberOfMeshContainers, CollisionRegion, PolyAABB, MeshIndex, &InsertRecursiveCounter, &SubdivideRecursiveCounter, 0, &MaxInsertionDepth);
-END_TIMED_BLOCK(Reserved8);
+                    continue ;
                 }
+                ASSERT(HashTable[HashValue].CurrentSize < ArrayCount(mesh_grid_cell::MeshForeignKey));
+                HashTable[HashValue].MeshForeignKey[HashTable[HashValue].CurrentSize++] = MeshIndex;
             }
         }
     }
+END_TIMED_BLOCK(Reserved8);
 
 #if defined(G_DEBUG)
     if (GameState->DebugInfo.Visible)
     {
-        DebugDrawMeshNodes(GameState, MeshNodes, 0, NumberOfMeshNodes, CollisionRegion, RL, InsertRecursiveCounter, SubdivideRecursiveCounter, MaxInsertionDepth);
+        DebugDrawHashTableGrids(GameState, RL, HashTable, HashTableDims, GridDims);
     }
 #endif
 
+BEGIN_TIMED_BLOCK(Reserved7);
     b32 ThereWasCollision = false;
-    for (u32 NodeIndex = 0;
-         NodeIndex < NumberOfMeshNodes;
-         ++NodeIndex)
+    for (u32 GridIndex = 0;
+         GridIndex < HashTableDims.X * HashTableDims.Y;
+         ++GridIndex)
     {
-        if (MeshNodes[NodeIndex].NOfMeshes >= 0)
+        for (u32 CenterIndex = 0;
+             CenterIndex < HashTable[GridIndex].CurrentSize;
+             ++CenterIndex)
         {
-            for (u32 CenterIndex = 0;
-                 CenterIndex < MeshNodes[NodeIndex].NOfMeshes;
-                 ++CenterIndex)
+            u32 CenterMeshIndex = HashTable[GridIndex].MeshForeignKey[CenterIndex];
+            for (u32 PushedIndex = 0;
+                PushedIndex < HashTable[GridIndex].CurrentSize;
+                ++PushedIndex)
             {
-                u32 CenterMeshIndex = MeshContainers[NodeIndex].MeshForeignKey[CenterIndex];
-                for (u32 PushedIndex = 0;
-                    PushedIndex < MeshNodes[NodeIndex].NOfMeshes;
-                    ++PushedIndex)
+                u32 PushedMeshIndex = HashTable[GridIndex].MeshForeignKey[PushedIndex];
+                if (PushedMeshIndex != CenterMeshIndex)
                 {
-                    u32 PushedMeshIndex = MeshContainers[NodeIndex].MeshForeignKey[PushedIndex];
-                    if (PushedMeshIndex != CenterMeshIndex)
-                    {
-                        mesh *PushedMesh = &GameState->Tables.Meshes.Data[PushedMeshIndex];
-                        mesh *CenterMesh = &GameState->Tables.Meshes.Data[CenterMeshIndex];
-                        v2_r32 PushedMeshMinimumTranslationVector = {};
+                    mesh *PushedMesh = &GameState->Tables.Meshes.Data[PushedMeshIndex];
+                    mesh *CenterMesh = &GameState->Tables.Meshes.Data[CenterMeshIndex];
+                    v2_r32 PushedMeshMinimumTranslationVector = {};
 BEGIN_TIMED_BLOCK(Reserved4);
-                        b32 AreOverlapped = PolyVsPoly(PushedMesh, CenterMesh, &PushedMeshMinimumTranslationVector);
+                    b32 AreOverlapped = PolyVsPoly(PushedMesh, CenterMesh, &PushedMeshMinimumTranslationVector);
 END_TIMED_BLOCK(Reserved4);
-                        if (AreOverlapped)
+                    if (AreOverlapped)
+                    {
+                        PushedMeshMinimumTranslationVector *= 1.01f;
+                        r32 DirectionOfTranslation = Inner(PushedMesh->FlowDirection, PushedMeshMinimumTranslationVector);
+                        if (DirectionOfTranslation >= 0.0f)
                         {
-                            PushedMeshMinimumTranslationVector *= 1.3f;
-                            r32 DirectionOfTranslation = Inner(PushedMesh->FlowDirection, PushedMeshMinimumTranslationVector);
-                            if (DirectionOfTranslation >= 0.0f)
+                            ThereWasCollision = true;
+                            for (u32 VertexIndex = 0;
+                                VertexIndex < PushedMesh->NumberOfVertices;
+                                ++VertexIndex)
                             {
-                                ThereWasCollision = true;
-                                for (u32 VertexIndex = 0;
-                                    VertexIndex < PushedMesh->NumberOfVertices;
-                                    ++VertexIndex)
-                                {
-                                    PushedMesh->VertexPositions[VertexIndex] += PushedMeshMinimumTranslationVector;
-                                }
-                                PushedMesh->FlowDirection = PushedMeshMinimumTranslationVector;
+                                PushedMesh->VertexPositions[VertexIndex] += PushedMeshMinimumTranslationVector;
                             }
-                            else
+                            PushedMesh->FlowDirection = PushedMeshMinimumTranslationVector;
+                        }
+                        else
+                        {
+                            ThereWasCollision = true;
+                            for (u32 VertexIndex = 0;
+                                VertexIndex < PushedMesh->NumberOfVertices;
+                                ++VertexIndex)
                             {
-                                ThereWasCollision = true;
-                                for (u32 VertexIndex = 0;
-                                    VertexIndex < PushedMesh->NumberOfVertices;
-                                    ++VertexIndex)
-                                {
-                                    PushedMesh->VertexPositions[VertexIndex] += -PushedMeshMinimumTranslationVector;
-                                }
-                                PushedMesh->FlowDirection = -PushedMeshMinimumTranslationVector;
+                                PushedMesh->VertexPositions[VertexIndex] += -PushedMeshMinimumTranslationVector;
                             }
+                            PushedMesh->FlowDirection = -PushedMeshMinimumTranslationVector;
                         }
                     }
                 }
             }
         }
     }
+END_TIMED_BLOCK(Reserved7);
 
     if (ThereWasCollision == false)
     {
@@ -486,63 +543,5 @@ END_TIMED_BLOCK(Reserved4);
         }
     }
 
-    PopArray(GameState->TransientArena, ArbitraryNumberOfNodes, node_mesh);
-    PopArray(GameState->TransientArena, ArbitraryNumberOfMeshContainers, node_mesh_container);
-
-    // u32 *OverlapStack = PushArray(&GameState->TransientArena, NumberOfMeshes, u32);
-    // ZeroArray(OverlapStack, NumberOfMeshes, u32);
-    // for (u32 Index = 0;
-    //      Index < NumberOfMeshes;
-    //      ++Index)
-    // {
-    //     OverlapStack[Index] = Index;
-    // }
-    // u32 OverlapStackSize = NumberOfMeshes;
-    // u32 DebugNumberOfIterations = 0;
-
-    // while (OverlapStackSize)
-    // {
-    //     u32 OuterIndex = OverlapStack[--OverlapStackSize];
-    //     mesh *CurrentMesh = &GameState->Tables.Meshes.Data[OuterIndex];
-    //     if ((CurrentMesh->Flags & (Mesh_CollidesMesh | Mesh_Shown)) == (Mesh_CollidesMesh | Mesh_Shown))
-    //     {
-    //         for (u32 InnerIndex = 0;
-    //             InnerIndex < NumberOfMeshes;
-    //             ++InnerIndex)
-    //         {
-    //             if (OuterIndex != InnerIndex)
-    //             {
-    //                 mesh *ComparedToMesh = &GameState->Tables.Meshes.Data[InnerIndex];
-    //                 if ((ComparedToMesh->Flags & (Mesh_CollidesMesh | Mesh_Shown)) == (Mesh_CollidesMesh | Mesh_Shown))
-    //                 {
-    //                     v2_r32 MinimumTranslationVector = {};
-    //                     BEGIN_TIMED_BLOCK(Reserved4);
-    //                     b32 AreOverlapped = PolyVsPoly(ComparedToMesh, CurrentMesh, &MinimumTranslationVector);
-    //                     END_TIMED_BLOCK(Reserved4);
-    //                     if (AreOverlapped)
-    //                     {
-    //                         r32 PushOutMultiplier = 1.3f;
-    //                         for (u32 VertexIndex = 0;
-    //                             VertexIndex < ComparedToMesh->NumberOfVertices;
-    //                             ++VertexIndex)
-    //                         {
-    //                             ComparedToMesh->VertexPositions[VertexIndex] += MinimumTranslationVector * PushOutMultiplier;
-    //                         }
-    //                         ASSERT(OverlapStackSize < NumberOfMeshes);
-    //                         OverlapStack[OverlapStackSize++] = InnerIndex;
-    //                         break ;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     if (++DebugNumberOfIterations == NumberOfMeshes)
-    //     {
-    //         // TODO(david): this kind of works like a deferred collision resolution, but think a bit more about how this could be done instead
-    //         break ;
-    //     }
-    // }
-
-    // PopArray(GameState->TransientArena, NumberOfMeshes, u32);
+    PopArray(GameState->TransientArena, HashTableDims.X * HashTableDims.Y, mesh_grid_cell);
 }

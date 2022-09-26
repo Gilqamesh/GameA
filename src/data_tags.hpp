@@ -81,6 +81,7 @@ enum mesh_flags
 
 struct mesh // 64B
 {
+    // TODO(david): in the future think about storing a mesh as a set of vertices (VBO) and indeces to vertices (aka IBO)
     v2_r32  VertexPositions[5];
     u32     NumberOfVertices;
     // TODO(david): problem with storing flags here is that now we cant
